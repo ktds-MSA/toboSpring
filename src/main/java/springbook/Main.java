@@ -1,7 +1,9 @@
 package springbook;
 
-import springbook.user.dao.ConnectionMaker;
-import springbook.user.dao.DConnectionMaker;
+import org.springframework.context.ApplicationContext;
+
+import org.springframework.context.support.ClassPathXmlApplicationContext;
+import org.springframework.context.support.GenericXmlApplicationContext;
 import springbook.user.dao.UserDao;
 import springbook.user.domain.User;
 
@@ -9,9 +11,9 @@ import java.sql.SQLException;
 
 public class Main {
     public static void main(String[] args) throws ClassNotFoundException, SQLException {
-        ConnectionMaker connectionMaker = new DConnectionMaker();
-
-        UserDao dao= new UserDao(connectionMaker);
+        //ApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
+        ApplicationContext context = new ClassPathXmlApplicationContext("applicationContext.xml",UserDao.class);
+        UserDao dao= context.getBean("userDao", UserDao.class);
 
         User user = new User();
         user.setId("whiteship");

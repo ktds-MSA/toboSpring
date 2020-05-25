@@ -1,3 +1,7 @@
-springbook\user\dao\UserDao.class
-springbook\Main.class
-springbook\user\domain\User.class
+springbook/user/dao/DaoFactory.class
+springbook/user/dao/UserDao.class
+springbook/Main.class
+springbook/user/dao/ConnectionMaker.class
+springbook/user/domain/User.class
+springbook/user/dao/DConnectionMaker.class
+springbook/user/dao/SimpleConnectionMaker.class
