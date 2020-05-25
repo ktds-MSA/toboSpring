@@ -5,10 +5,13 @@ import java.sql.*;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import springbook.user.domain.User;
 
+import javax.sql.DataSource;
+
 public class UserDao {
     private ConnectionMaker connectionMaker;
     private Connection c;
     private User user;
+    private DataSource dataSource;
 
     public UserDao(){
         AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext(DaoFactory.class);
@@ -20,7 +23,7 @@ public class UserDao {
     }
 
     public void add(User user) throws ClassNotFoundException, SQLException {
-        this.c = connectionMaker.makeConnection();
+        this.c = dataSource.getConnection();
 
         PreparedStatement ps = c.prepareStatement(
                 "insert into users(id, name, password) values(?,?,?)");
@@ -35,7 +38,7 @@ public class UserDao {
     }
 
     public User get(String id) throws ClassNotFoundException,SQLException {
-        this.c = connectionMaker.makeConnection();
+        this.c = dataSource.getConnection();
 
         PreparedStatement ps = c.prepareStatement(
                 "select * from users where id = ?");
@@ -55,10 +58,18 @@ public class UserDao {
         return this.user;
     }
 
+
     public void setConnectionMaker(ConnectionMaker connectionMaker){
 
         this.connectionMaker = connectionMaker;
     }
 
+    public DataSource getDataSource() {
+        return dataSource;
+    }
+
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
 }
