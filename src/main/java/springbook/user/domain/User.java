@@ -7,8 +7,6 @@ public class User {
     private static final int SILVER = 2;
     private static final int GOLD = 3;
 
-
-
     Level level;
     int login;
     int recommend;
@@ -76,5 +74,16 @@ public class User {
 
     public void setRecommend(int recommend) {
         this.recommend = recommend;
+    }
+
+    public void upgradeLevel() {
+        Level nextLevel = this.level.nextLevel();
+
+        if(nextLevel == null) {
+            throw new IllegalArgumentException(this.level + "은 업그레이드가 불가능합니다.");
+        }
+        else {
+            this.level = nextLevel;
+        }
     }
 }
