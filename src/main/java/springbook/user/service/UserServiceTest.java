@@ -4,6 +4,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.MailSender;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import springbook.user.dao.Level;
@@ -34,14 +35,17 @@ public class UserServiceTest {
     @Autowired
     DataSource dataSource;
 
+    @Autowired
+    MailSender mailSender;
+
     @Before
     public void setUp() {
         users = Arrays.asList(
-                new User("bumjin", "박범진", "p1", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER-1, 0),
-                new User("joytouch", "강명성", "p2", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0),
-                new User("erwins", "신승한", "p3",Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD-1),
-                new User("madnite1", "이상호", "p4", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD),
-                new User("green", "오인규", "p5",Level.GOLD, 100,Integer.MAX_VALUE)
+                new User("bumjin", "박범진", "p1", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER-1, 0, "test1@gmail.com"),
+                new User("joytouch", "강명성", "p2", Level.BASIC, MIN_LOGCOUNT_FOR_SILVER, 0, "test2@gmail.com"),
+                new User("erwins", "신승한", "p3",Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD-1, "test3@gmail.com"),
+                new User("madnite1", "이상호", "p4", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD, "test4@gmail.com"),
+                new User("green", "오인규", "p5",Level.GOLD, 100,Integer.MAX_VALUE, "test5@gmail.com")
         );
         userDao = userService.getUserDao();
     }
@@ -122,6 +126,7 @@ public class UserServiceTest {
 
         testUserService.setUserDao(this.userDao);
         testUserService.setDataSource(this.dataSource);
+        testUserService.setMailSender(mailSender);
 
         userDao.deleteAll();
 

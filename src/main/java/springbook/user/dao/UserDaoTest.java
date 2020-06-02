@@ -46,9 +46,9 @@ public class UserDaoTest {
         System.out.println(this.context);
         System.out.println(this);
         dao= this.context.getBean("userDao", UserDaoJdbc.class);
-        user1 = new User("gyumee","백성철","springno1", Level.BASIC, 1, 0);
-        user2 = new User("leegw700","이길원","springno2",Level.SILVER, 55, 10);
-        user3 = new User("bumjin","박범진","springno3",Level.GOLD,100,40);
+        user1 = new User("gyumee","백성철","springno1", Level.BASIC, 1, 0, "test1@gmail.com");
+        user2 = new User("leegw700","이길원","springno2",Level.SILVER, 55, 10, "test2@gmail.com");
+        user3 = new User("bumjin","박범진","springno3",Level.GOLD,100,40, "test3@gmail.com");
     }
 
     @Test
@@ -129,6 +129,7 @@ public class UserDaoTest {
         assertThat(user1.getLevel(), is(user2.getLevel()));
         assertThat(user1.getLogin(), is(user2.getLogin()));
         assertThat(user1.getRecommend(), is(user2.getRecommend()));
+        assertThat(user1.getEmail(), is(user2.getEmail()));
     }
 
     @Test(expected= DataAccessException.class)
@@ -167,6 +168,7 @@ public class UserDaoTest {
         user1.setLevel(Level.GOLD);
         user1.setLogin(100);
         user1.setRecommend(999);
+        user1.setEmail("testuser@gmail.com");
         dao.update(user1);
 
         User user1update = dao.get(user1.getId());
