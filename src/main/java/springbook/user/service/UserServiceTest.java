@@ -119,8 +119,10 @@ public class UserServiceTest {
     @Test
     public void upgradeAllOrNothing() throws SQLException {
         UserService testUserService = new TestUserService(users.get(3).getId());
+
         testUserService.setUserDao(this.userDao);
         testUserService.setDataSource(this.dataSource);
+
         userDao.deleteAll();
 
         for(User user : users) userDao.add(user);

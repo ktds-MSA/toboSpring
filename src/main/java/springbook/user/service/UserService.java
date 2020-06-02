@@ -39,6 +39,9 @@ public class UserService {
         PlatformTransactionManager transactionManager = new DataSourceTransactionManager(dataSource);
 
         TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+//        TransactionSynchronizationManager.initSynchronization();
+//        Connection c = DataSourceUtils.getConnection(dataSource);
+//        c.setAutoCommit(false);
 
         try {
             List<User> users = userDao.getAll();
@@ -47,11 +50,18 @@ public class UserService {
                     upgradeLevel(user);
                 }
             }
-           transactionManager.commit(status);
+            transactionManager.commit(status);
+//           c.commit();
         } catch (RuntimeException e) {
             transactionManager.rollback(status);
+//            c.rollback();
             throw e;
         }
+//        } finally {
+//            DataSourceUtils.releaseConnection(c, dataSource);
+//            TransactionSynchronizationManager.unbindResource(this.dataSource);
+//            TransactionSynchronizationManager.clearSynchronization();
+//        }
     }
 
     protected void upgradeLevel(User user) throws TestUserServiceException {
