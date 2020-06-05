@@ -8,13 +8,14 @@ import org.springframework.mail.MailSender;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.transaction.PlatformTransactionManager;
 import springbook.user.dao.Level;
 import springbook.user.dao.UserDao;
 import springbook.user.domain.User;
-import springbook.user.service.UserService;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -23,18 +24,25 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
 import static org.junit.Assert.fail;
-import static springbook.user.service.UserService.MIN_RECOMMEND_FOR_GOLD;
-import static springbook.user.service.UserService.MIN_LOGCOUNT_FOR_SILVER;
+import static springbook.user.service.UserServiceImpl.MIN_RECOMMEND_FOR_GOLD;
+import static springbook.user.service.UserServiceImpl.MIN_LOGCOUNT_FOR_SILVER;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations="classpath:testApplicationContext.xml")
 public class UserServiceTest {
     @Autowired
     UserService userService;
+
+    @Autowired
+    UserServiceImpl userServiceImpl;
+    @Autowired
     UserDao userDao;
     List<User> users;
     @Autowired
     DataSource dataSource;
+
+    @Autowired
+    PlatformTransactionManager transactionManager;
 
     @Autowired
     MailSender mailSender;
@@ -48,7 +56,6 @@ public class UserServiceTest {
                 new User("madnite1", "이상호", "p4", Level.SILVER, 60, MIN_RECOMMEND_FOR_GOLD, "test4@gmail.com"),
                 new User("green", "오인규", "p5",Level.GOLD, 100,Integer.MAX_VALUE, "test5@gmail.com")
         );
-        userDao = userService.getUserDao();
     }
 
     @Test
@@ -56,28 +63,59 @@ public class UserServiceTest {
         assertThat(this.userService, is(notNullValue()));
     }
 
+    static class MockUserDao implements UserDao{
+        private List<User> users;
+        private List<User> updated = new ArrayList();
+
+        private MockUserDao(List<User> users){
+            this.users = users;
+        }
+
+        public List<User> getUpdated() {
+            return this.updated;
+        }
+
+        public List<User> getAll() {
+            return this.users;
+        }
+
+        public void update(User user) {
+            updated.add(user);
+        }
+
+        public void add(User user) { throw new UnsupportedOperationException(); }
+        public void deleteAll() { throw new UnsupportedOperationException(); }
+        public User get(String id) { throw new UnsupportedOperationException(); }
+        public int getCount() { throw new UnsupportedOperationException(); }
+    }
+
     @Test
     @DirtiesContext
     public void upgradeLevels() throws TestUserServiceException, SQLException {
-        userDao.deleteAll();
+        UserServiceImpl userServiceImpl = new UserServiceImpl();
 
-        for (User user : users) userDao.add(user);
+        MockUserDao mockUserDao = new MockUserDao(this.users);
+        userServiceImpl.setUserDao(mockUserDao);
 
         MockMailSender mockMailSender = new MockMailSender();
-        userService.setMailSender(mockMailSender);
+        userServiceImpl.setMailSender(mockMailSender);
 
-        userService.upgradeLevels();
+        userServiceImpl.upgradeLevels();
 
-        checkLevelUpgraded(users.get(0), false);
-        checkLevelUpgraded(users.get(1), true);
-        checkLevelUpgraded(users.get(2), false);
-        checkLevelUpgraded(users.get(3), true);
-        checkLevelUpgraded(users.get(4), false);
+        List<User> updated = mockUserDao.getUpdated();
+        assertThat(updated.size(), is(2));
+        checkUserAndLevel(updated.get(0), "joytouch", Level.SILVER);
+        checkUserAndLevel(updated.get(1), "madnite1", Level.GOLD);
 
         List<String> request = mockMailSender.getRequests();
         assertThat(request.size(), is(2));
         assertThat(request.get(0), is(users.get(1).getEmail()));
         assertThat(request.get(1), is(users.get(3).getEmail()));
+    }
+
+    private void checkUserAndLevel(User updated, String expectedId, Level expectedLevel) {
+        assertThat(updated.getId(), is(expectedId));
+        assertThat(updated.getLevel(), is(expectedLevel));
     }
 
     private void checkLevelUpgraded(User user, boolean upgraded) {
@@ -116,10 +154,10 @@ public class UserServiceTest {
 
 
 
-    static class TestUserService extends UserService{
+    static class TestUserServiceImpl extends UserServiceImpl {
         private String id;
 
-        private TestUserService(String id) {
+        private TestUserServiceImpl(String id) {
             this.id = id;
         }
         @Override
@@ -131,18 +169,21 @@ public class UserServiceTest {
 
     @Test
     public void upgradeAllOrNothing() throws SQLException {
-        UserService testUserService = new TestUserService(users.get(3).getId());
+        UserServiceImpl testUserService = new TestUserServiceImpl(users.get(3).getId());
 
         testUserService.setUserDao(this.userDao);
-        testUserService.setDataSource(this.dataSource);
         testUserService.setMailSender(mailSender);
+
+        UserServiceTx txUserService = new UserServiceTx();
+        txUserService.setTransactionManager(transactionManager);
+        txUserService.setUserService(testUserService);
 
         userDao.deleteAll();
 
         for(User user : users) userDao.add(user);
 
         try {
-            testUserService.upgradeLevels();
+            txUserService.upgradeLevels();
             fail("TestUserServiceException expected");
         }
         catch (TestUserServiceException e){
